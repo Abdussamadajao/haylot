@@ -12,6 +12,7 @@ import { data } from "./(tabs)/home";
 import Sound from "@/components/Icons/sound";
 import CloseIcon from "@/components/Icons/close";
 import { BG, Clock } from "@/constants";
+import { router } from "expo-router";
 
 const Game = () => {
   const [count, setCount] = useState(20);
@@ -25,10 +26,15 @@ const Game = () => {
     return () => clearTimeout(timer);
   }, [count, isRunning]);
 
+  useEffect(() => {
+    if (count === 0) {
+      router.push("/(root)/main");
+    }
+  }, [count]);
   return (
     <ImageBackground source={BG} className="w-full h-full">
       <SafeAreaView>
-        <View className="flex-row  px-3 space-x-2 pt-2">
+        <View className="flex-row  px-3 justify-center space-x-3 pt-2">
           {data.map((item, idx) => (
             <View
               className=" w-[90px] h-[30px] border border-[#A57C0099] rounded-full relative "
