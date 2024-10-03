@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  StyleSheet,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { BG, Clock } from "@/constants";
@@ -12,32 +13,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { data } from "./(tabs)/home";
 import Sound from "@/components/Icons/sound";
 import CloseIcon from "@/components/Icons/close";
-import Animated, {
-  Easing,
-  useAnimatedProps,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import Svg, { Circle } from "react-native-svg";
+import { AnimatedCircularProgress } from "react-native-circular-progress";
+import { OtpInput } from "react-native-otp-entry";
+import { OTPInput } from "@/components/MultipleInput";
+import type { TextInput } from "react-native";
+import type { RefObject } from "react";
 
 const { width } = Dimensions.get("window");
-const SIZE = width * 0.3; // Size of the clock
-const STROKE_WIDTH = 10;
-const RADIUS = (SIZE - STROKE_WIDTH) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const SIZE = width * 0.3; // Size of the clock (adjust as needed)
+
 const Main = () => {
+  const word = "Holiday";
+  const wordLength = word.length;
   const [time, setTime] = useState(600);
-
-  const progress = useSharedValue(1);
-  Dimensions;
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: CIRCUMFERENCE * progress.value,
-  }));
-
+  const [progress, setProgress] = useState(0);
+  const [codes, setCodes] = useState<string[]>(Array(wordLength).fill(""));
+  const [errorMessages, setErrorMessages] = useState<string[]>();
+  const refs = useRef<(TextInput | null)[]>(Array(wordLength).fill(null));
   useEffect(() => {
-    // Simulate timer countdown
     const interval = setInterval(() => {
       setTime((prev) => {
         if (prev <= 1) {
@@ -46,24 +39,16 @@ const Main = () => {
         }
         return prev - 1;
       });
+
+      // Progress increases as time decreases
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [time]);
 
   useEffect(() => {
-    // Animate the stroke as the time decreases
-    if (time > 0) {
-      progress.value = withTiming(time / 60, {
-        duration: 1000,
-        easing: Easing.linear,
-      });
-    } else {
-      progress.value = withTiming(0, {
-        duration: 500, // You can adjust the duration for the end animation
-        easing: Easing.linear,
-      });
-    }
+    // Calculate progress based on time elapsed
+    setProgress((600 - time) / 6); // 10 minutes corresponds to 0 to 100% fill
   }, [time]);
 
   // Convert time into MM:SS format
@@ -71,6 +56,30 @@ const Main = () => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
+  const onChangeCode = (text: string, index: number) => {
+    if (text.length > 1) {
+      setErrorMessages(undefined);
+      const newCodes = text.split("").slice(0, wordLength); // Ensure the length matches the word
+      setCodes(newCodes);
+      refs.current[wordLength - 1]?.focus(); // Move to the last input if it's filled
+    } else {
+      setErrorMessages(undefined);
+      const newCodes = [...codes];
+      newCodes[index] = text;
+      setCodes(newCodes);
+      if (text !== "" && index < wordLength - 1) {
+        refs.current[index + 1]?.focus(); // Focus next input
+      }
+    }
+  };
+  const config = {
+    backgroundColor: "#fff",
+    textColor: "#000",
+    borderColor: "#ccc",
+    errorColor: "#f00",
+    focusColor: "#007BFF",
   };
 
   return (
@@ -103,32 +112,44 @@ const Main = () => {
           </TouchableOpacity>
         </View>
         <View className="justify-center items-center ">
-          <Svg width={SIZE} height={SIZE}>
-            <Circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={RADIUS}
-              stroke="#ddd"
-              strokeWidth={STROKE_WIDTH}
-            />
-            <AnimatedCircle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={RADIUS}
-              stroke="#ff6347" // Stroke color (can be customized)
-              strokeWidth={STROKE_WIDTH}
-              strokeDasharray={CIRCUMFERENCE}
-              animatedProps={animatedProps}
-              strokeLinecap="round"
-            />
-          </Svg>
+          <View className="bg-[#0000001F] border space-x-3 border-[#FFFFFF1F] w-[160px] flex-row items-center justify-center rounded-xl">
+            <AnimatedCircularProgress
+              size={50}
+              width={2}
+              fill={progress}
+              tintColor="#09C11C"
+              backgroundColor="transparent"
+              rotation={+0}
+              lineCap="round"
+            >
+              {() => <Image source={Clock} className="h-[50px] w-[50px]" />}
+            </AnimatedCircularProgress>
 
-          <View className="bg-[#0000001F] border border-[#FFFFFF1F] w-[160px] flex-row items-center justify-center rounded-xl">
-            <Image source={Clock} className="h-[60px] w-[60px]" />
             <Text className="text-white text-[32px] font-wendy">
               {formatTime(time)}
             </Text>
           </View>
+        </View>
+
+        <View className="justify-center items-center space-y-4">
+          <Text className="text-white text-[40px] font-wendy">Holiday</Text>
+          <OtpInput
+            numberOfDigits={wordLength}
+            focusColor="#E65110"
+            focusStickBlinkingDuration={500}
+            onTextChange={(text) => console.log(text)}
+            theme={{
+              pinCodeContainerStyle: styles.pincodeContainer,
+              containerStyle: {
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 8,
+              },
+            }}
+            type="alpha"
+          />
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -136,3 +157,19 @@ const Main = () => {
 };
 
 export default Main;
+
+const styles = StyleSheet.create({
+  pincodeContainer: {
+    width: 44,
+    height: 44,
+    backgroundColor: "white",
+    borderColor: "#D0D5DD",
+  },
+  shadow: {
+    shadowColor: "#000000",
+    shadowOffset: { width: 20, height: 40 },
+    shadowOpacity: 1,
+    shadowRadius: 33.41,
+    elevation: 24,
+  },
+});

@@ -15,7 +15,7 @@ import { BG, Clock } from "@/constants";
 import { router } from "expo-router";
 
 const Game = () => {
-  const [count, setCount] = useState(20);
+  const [count, setCount] = useState(3);
   const [isRunning, setIsRunning] = useState(true);
 
   useEffect(() => {
