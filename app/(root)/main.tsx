@@ -4,7 +4,6 @@ import {
   ImageBackground,
   Image,
   TouchableOpacity,
-  Dimensions,
   StyleSheet,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,22 +13,17 @@ import { data } from "./(tabs)/home";
 import Sound from "@/components/Icons/sound";
 import CloseIcon from "@/components/Icons/close";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
-import { OtpInput } from "react-native-otp-entry";
-import { OTPInput } from "@/components/MultipleInput";
-import type { TextInput } from "react-native";
-import type { RefObject } from "react";
-
-const { width } = Dimensions.get("window");
-const SIZE = width * 0.3; // Size of the clock (adjust as needed)
+import OTPTextInput from "react-native-otp-textinput";
+import CustomKeyboard from "@/components/CustomKeyBoard";
 
 const Main = () => {
   const word = "Holiday";
   const wordLength = word.length;
   const [time, setTime] = useState(600);
   const [progress, setProgress] = useState(0);
-  const [codes, setCodes] = useState<string[]>(Array(wordLength).fill(""));
-  const [errorMessages, setErrorMessages] = useState<string[]>();
-  const refs = useRef<(TextInput | null)[]>(Array(wordLength).fill(null));
+  const otpInputRef = useRef<OTPTextInput | null>(null);
+  const [otp, setOtp] = useState("");
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTime((prev) => {
@@ -58,30 +52,15 @@ const Main = () => {
     return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
   };
 
-  const onChangeCode = (text: string, index: number) => {
-    if (text.length > 1) {
-      setErrorMessages(undefined);
-      const newCodes = text.split("").slice(0, wordLength); // Ensure the length matches the word
-      setCodes(newCodes);
-      refs.current[wordLength - 1]?.focus(); // Move to the last input if it's filled
-    } else {
-      setErrorMessages(undefined);
-      const newCodes = [...codes];
-      newCodes[index] = text;
-      setCodes(newCodes);
-      if (text !== "" && index < wordLength - 1) {
-        refs.current[index + 1]?.focus(); // Focus next input
-      }
+  const handleKeyPress = (key: string) => {
+    if (key === "") {
+      // Handle delete (clear last character)
+      setOtp((prev) => prev.slice(0, -1));
+    } else if (otp.length < 6) {
+      // Add key to OTP if under length limit
+      setOtp((prev) => prev + key);
     }
   };
-  const config = {
-    backgroundColor: "#fff",
-    textColor: "#000",
-    borderColor: "#ccc",
-    errorColor: "#f00",
-    focusColor: "#007BFF",
-  };
-
   return (
     <ImageBackground source={BG} className="w-full h-full">
       <SafeAreaView>
@@ -131,25 +110,20 @@ const Main = () => {
           </View>
         </View>
 
-        <View className="justify-center items-center space-y-4">
+        <View className="justify-center items-center space-y-4 h-[60vh]">
           <Text className="text-white text-[40px] font-wendy">Holiday</Text>
-          <OtpInput
-            numberOfDigits={wordLength}
-            focusColor="#E65110"
-            focusStickBlinkingDuration={500}
-            onTextChange={(text) => console.log(text)}
-            theme={{
-              pinCodeContainerStyle: styles.pincodeContainer,
-              containerStyle: {
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 8,
-              },
-            }}
-            type="alpha"
-          />
+
+          <View className="flex ">
+            <OTPTextInput
+              ref={otpInputRef}
+              inputCount={wordLength}
+              handleTextChange={(code) => setOtp(code)}
+              keyboardType="url"
+              textInputStyle={styles.inputBox}
+              tintColor={"transparent"}
+              offTintColor={"transparent"}
+            />
+          </View>
         </View>
       </SafeAreaView>
     </ImageBackground>
@@ -159,17 +133,14 @@ const Main = () => {
 export default Main;
 
 const styles = StyleSheet.create({
-  pincodeContainer: {
-    width: 44,
-    height: 44,
+  inputBox: {
+    width: 40,
+    height: 40,
+    textAlign: "center",
+    // margin: 5,5
+    fontSize: 18,
+    color: "white",
     backgroundColor: "white",
-    borderColor: "#D0D5DD",
-  },
-  shadow: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 20, height: 40 },
-    shadowOpacity: 1,
-    shadowRadius: 33.41,
-    elevation: 24,
+    borderRadius: 10,
   },
 });
