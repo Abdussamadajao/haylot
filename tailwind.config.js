@@ -16,6 +16,12 @@ module.exports = {
         lg: "1px 1px 5px rgb(0, 0, 0)",
         none: "none",
       },
+      colors: {
+        haylot: {
+          yellow: "#F1DE35CC",
+          pink: "#830047",
+        },
+      },
     },
   },
   plugins: [

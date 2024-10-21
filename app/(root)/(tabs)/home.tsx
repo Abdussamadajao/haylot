@@ -4,6 +4,7 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import React from "react";
 import AuthBackground from "@/components/AuthBackground";
@@ -23,8 +24,8 @@ import { router } from "expo-router";
 const Home = () => {
   return (
     <AuthBackground>
-      <SafeAreaView className="flex-1">
-        <View className="flex-row  px-3 space-x-2">
+      <ScrollView className="flex-1 mt-[75px]">
+        <View className="flex-row  px-3 space-x-2 ">
           {data.map((item, idx) => (
             <View
               className=" w-[90px] h-[30px] border border-[#A57C0099] rounded-full relative "
@@ -114,7 +115,7 @@ const Home = () => {
             </View>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ScrollView>
     </AuthBackground>
   );
 };
